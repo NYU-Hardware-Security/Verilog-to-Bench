@@ -70,8 +70,8 @@ def main():
                             flip_out = re.search("(.*?)=", str(line)).group(1)
                             tempin.write("INPUT(newin_" + flip_out + ")\n")
                             outfile.write(flip_out + " = BUF(newin_" + flip_out + ")\n")
-                            tempout.write("OUTPUT(newout_" + flip_in + ")\n")
-                            outfile.write("newout_" + flip_in + " = BUF(" + flip_in + ")\n")
+                            tempout.write("OUTPUT(newout_" + flip_out + ")\n")
+                            outfile.write("newout_" + flip_out + " = BUF(" + flip_in + ")\n")
                         else:
                             outfile.write(line)
                         line = ''
