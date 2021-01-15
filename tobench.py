@@ -33,6 +33,7 @@ def main():
     argparser.add_argument("-V", "--version", action="store_true", dest="showversion", default=False, help="Show the version")
     argparser.add_argument("-i", "--input_file", action="store", dest="input_file", default="", help="Specify the name of the netlist file to process")
     argparser.add_argument("-o", "--output_file", action="store", dest="output_file", default="out.bench", help="Specify the name of the output file")
+    argparser.add_argument("--for_formal_check_reg", action="store_true", dest="formality_aid", default=False, help="Try to keep reg names")
 
     # read arguments/options from the cmd line
     args = argparser.parse_args()
@@ -58,12 +59,12 @@ def main():
                 elif ";" in line: # once we've reached the end of a statement
                     line = ' '.join(line.split()) # get rid of multiple spaces and trailing spaces
                     line = line.replace('\n','') # get rid of newlines in the middle of an instantiation
-                    outfile.write(process_cell(line))
+                    outfile.write(process_cell(line, args.formality_aid))
                     line = ''
             
         print("done")
 
-def process_cell(line):
+def process_cell(line, formal_help):
     newline = ''
 
     if "input " in line:
@@ -83,28 +84,41 @@ def process_cell(line):
     elif "wire " in line:
         return ""
 
+    # newline = line.replace(' ','')
+    # to_process = newline.split(",")
+
+    ### Continue on for regular nodes
+
+    # extract node type and name
+    test = line.split(" ")
+    test = test[:2]
+
     newline = line.replace(' ','')
     to_process = newline.split(",")
-    # print(to_process)
     
-    if "INV" in to_process[0]:
+    if "INV" in test[0]:
         newline = (re.search( ".ZN\((.*?)\)", str(to_process)).group(1) + " = NOT(" + re.search( ".I\((.*?)\)", str(to_process)).group(1) + ")")
-    elif "BUF" in to_process[0]:
+    elif "BUF" in test[0]:
         newline = (re.search( ".Z\((.*?)\)", str(to_process)).group(1) + " = BUF(" + re.search( ".I\((.*?)\)", str(to_process)).group(1) + ")")
-    elif "NAND" in to_process[0]:
+    elif "NAND" in test[0]:
         newline = (re.search( ".ZN\((.*?)\)", str(to_process)).group(1) + " = NAND(" + re.search( ".A1\((.*?)\)", str(to_process)).group(1) + "," + re.search( ".A2\((.*?)\)", str(to_process)).group(1) +")")
-    elif "AND" in to_process[0]:
+    elif "AND" in test[0]:
         newline = (re.search( ".Z\((.*?)\)", str(to_process)).group(1) + " = AND(" + re.search( ".A1\((.*?)\)", str(to_process)).group(1) + "," + re.search( ".A2\((.*?)\)", str(to_process)).group(1) +")")
-    elif "XNOR" in to_process[0]:
+    elif "XNOR" in test[0]:
         newline = (re.search( ".ZN\((.*?)\)", str(to_process)).group(1) + " = XNOR(" + re.search( ".A1\((.*?)\)", str(to_process)).group(1) + "," + re.search( ".A2\((.*?)\)", str(to_process)).group(1) +")")
-    elif "XOR" in to_process[0]:
+    elif "XOR" in test[0]:
         newline = (re.search( ".Z\((.*?)\)", str(to_process)).group(1) + " = XOR(" + re.search( ".A1\((.*?)\)", str(to_process)).group(1) + "," + re.search( ".A2\((.*?)\)", str(to_process)).group(1) +")")
-    elif "NOR" in to_process[0]:
+    elif "NOR" in test[0]:
         newline = (re.search( ".ZN\((.*?)\)", str(to_process)).group(1) + " = NOR(" + re.search( ".A1\((.*?)\)", str(to_process)).group(1) + "," + re.search( ".A2\((.*?)\)", str(to_process)).group(1) +")")
-    elif "OR" in to_process[0]:
+    elif "OR" in test[0]:
         newline = (re.search( ".Z\((.*?)\)", str(to_process)).group(1) + " = OR(" + re.search( ".A1\((.*?)\)", str(to_process)).group(1) + "," + re.search( ".A2\((.*?)\)", str(to_process)).group(1) +")")
-    elif "DFF" in to_process[0]:
-        newline = (re.search( ".Q\((.*?)\)", str(to_process)).group(1) + " = DFF(" + re.search( ".D\((.*?)\)", str(to_process)).group(1)+ ")")
+    elif "DFF" in test[0]:
+        if formal_help:
+            newline = test[1] + " = DFF(" + re.search( ".D\((.*?)\)", str(to_process)).group(1)+ ")\n"
+            newline += re.search( ".Q\((.*?)\)", str(to_process)).group(1) + " = BUF(" + test[1] + ")"
+        else:
+            newline = (re.search( ".Q\((.*?)\)", str(to_process)).group(1) + " = DFF(" + re.search( ".D\((.*?)\)", str(to_process)).group(1)+ ")")
+
     else:
         newline = line
     return newline + '\n'
