@@ -71,10 +71,10 @@ def main():
                             line = line.replace(" ", "")
                             po = re.search("OUTPUT\((.*?)\)", str(line)).group(1)
                             primaryOutputs.append(po)
-                        elif "dff" in line: # this is the crucial part, inputs to DFFs become POs, outputs to DFFs become PIs
+                        elif "DFF" in line: # this is the crucial part, inputs to DFFs become POs, outputs to DFFs become PIs
                             # print(line.split(" "))
                             line = line.replace(" ","")
-                            flip_in = re.search("dff\((.*?)\)", str(line)).group(1)
+                            flip_in = re.search("DFF\((.*?)\)", str(line)).group(1)
                             flip_out = re.search("(.*?)=", str(line)).group(1)
                             if(flip_in in primaryInputs or flip_out in primaryOutputs):
                                 outfile.write(flip_out + " = BUF(" + flip_in + ")\n")
@@ -95,8 +95,6 @@ def main():
     
     
     print("done")
-    #print(primaryInputs)
-    #testprint(primaryOutputs)
 
 if __name__ == "__main__":
     main()
