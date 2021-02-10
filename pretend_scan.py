@@ -46,6 +46,8 @@ def main():
         args.input_file = args[0]
     
     print("Reading File: " + args.input_file)
+    primaryInputs = []
+    primaryOutputs = []
 
     with open(args.input_file, 'r') as f:
         line = ''
@@ -61,17 +63,26 @@ def main():
                             pass
                         elif "INPUT" in line:
                             tempin.write(line)
+                            line = line.replace(" ","")
+                            pi = re.search("INPUT\((.*?)\)", str(line)).group(1)
+                            primaryInputs.append(pi)
                         elif "OUTPUT" in line: 
                             tempout.write(line)
-                        elif "DFF" in line: # this is the crucial part, inputs to DFFs become POs, outputs to DFFs become PIs
+                            line = line.replace(" ", "")
+                            po = re.search("OUTPUT\((.*?)\)", str(line)).group(1)
+                            primaryOutputs.append(po)
+                        elif "dff" in line: # this is the crucial part, inputs to DFFs become POs, outputs to DFFs become PIs
                             # print(line.split(" "))
                             line = line.replace(" ","")
-                            flip_in = re.search("DFF\((.*?)\)", str(line)).group(1)
+                            flip_in = re.search("dff\((.*?)\)", str(line)).group(1)
                             flip_out = re.search("(.*?)=", str(line)).group(1)
-                            tempin.write("INPUT(newin_" + flip_out + ")\n")
-                            outfile.write(flip_out + " = BUF(newin_" + flip_out + ")\n")
-                            tempout.write("OUTPUT(newout_" + flip_out + ")\n")
-                            outfile.write("newout_" + flip_out + " = BUF(" + flip_in + ")\n")
+                            if(flip_in in primaryInputs or flip_out in primaryOutputs):
+                                outfile.write(flip_out + " = BUF(" + flip_in + ")\n")
+                            else:
+                                tempin.write("INPUT(newin_" + flip_out + ")\n")
+                                outfile.write(flip_out + " = BUF(newin_" + flip_out + ")\n")
+                                tempout.write("OUTPUT(newout_" + flip_out + ")\n")
+                                outfile.write("newout_" + flip_out + " = BUF(" + flip_in + ")\n")
                         else:
                             outfile.write(line)
                         line = ''
@@ -84,6 +95,8 @@ def main():
     
     
     print("done")
+    #print(primaryInputs)
+    #testprint(primaryOutputs)
 
 if __name__ == "__main__":
     main()
