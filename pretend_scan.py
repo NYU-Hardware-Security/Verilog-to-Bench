@@ -83,6 +83,18 @@ def main():
                                 outfile.write(flip_out + " = BUF(newin_" + flip_out + ")\n")
                                 tempout.write("OUTPUT(newout_" + flip_out + ")\n")
                                 outfile.write("newout_" + flip_out + " = BUF(" + flip_in + ")\n")
+                        elif "dff" in line: # this is the crucial part, inputs to DFFs become POs, outputs to DFFs become PIs
+                            # print(line.split(" "))
+                            line = line.replace(" ","")
+                            flip_in = re.search("dff\((.*?)\)", str(line)).group(1)
+                            flip_out = re.search("(.*?)=", str(line)).group(1)
+                            if(flip_in in primaryInputs or flip_out in primaryOutputs):
+                                outfile.write(flip_out + " = BUF(" + flip_in + ")\n")
+                            else:
+                                tempin.write("INPUT(newin_" + flip_out + ")\n")
+                                outfile.write(flip_out + " = BUF(newin_" + flip_out + ")\n")
+                                tempout.write("OUTPUT(newout_" + flip_out + ")\n")
+                                outfile.write("newout_" + flip_out + " = BUF(" + flip_in + ")\n")
                         else:
                             outfile.write(line)
                         line = ''
